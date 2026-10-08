@@ -1,0 +1,125 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step 2 — Readiness Assessment</title><link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/firebase-config.js"></script><script src="js/app.js"></script></head>
+<body><header class="container nav"><a class="logo" href="index.html">Placement<span>Radar</span></a><span class="muted" style="font-size:13px">Diagnostic · Step 2 of 3</span></header>
+<main class="container page"><div class="form-card card"><div class="eyebrow">STEP 2 / READINESS ASSESSMENT</div><h1>Let’s test your readiness.</h1><p class="muted">12 quick questions across aptitude, technical fundamentals, DSA and interview readiness. Choose the best answer — this is a diagnosis, not an exam.</p><div class="progress"><div id="progressFill" style="width:8%"></div></div><div class="qbox">
+<div class="qmeta"><span id="category">Aptitude</span><span id="counter">Question 1 of 12</span></div><div class="question" id="question"></div><div class="options" id="options"></div>
+<div class="form-actions"><button id="prev" class="btn btn-ghost">← Previous</button><button id="next" class="btn btn-primary">Next →</button></div>
+</div></div></main>
+<script>
+PRAuth.ready().then(async user=>{
+if(!user){location.href="index.html";return;}
+const p=PR.profile();
+const role=p.role||"Software Developer";
+const level=p.level||"Beginner — just starting";
+
+const banks={
+"Cybersecurity":[
+{cat:"Security Fundamentals",q:"Which principle means a user should receive only the permissions required to perform their job?",o:["Least privilege","Open access","Fail-open","Data duplication"],a:0},
+{cat:"Security Fundamentals",q:"What is phishing primarily designed to do?",o:["Improve network speed","Trick users into revealing information or taking unsafe actions","Encrypt every file automatically","Compress email attachments"],a:1},
+{cat:"Networking",q:"Which protocol is commonly used for secure remote administration of a Linux server?",o:["FTP","SSH","HTTP","SMTP"],a:1},
+{cat:"Networking",q:"What does a firewall primarily control?",o:["User salaries","Network traffic based on rules","CPU temperature","Database formatting"],a:1},
+{cat:"Web Security",q:"Which vulnerability involves injecting malicious SQL into an application's database query?",o:["XSS","SQL Injection","DDoS","DNS spoofing"],a:1},
+{cat:"Web Security",q:"Which practice is most appropriate for storing user passwords?",o:["Plain text","Reversible encryption only","Strong salted password hashing","Putting them in HTML"],a:2},
+{cat:"SOC / Blue Team",q:"A sudden large number of failed logins from one source should first be treated as what?",o:["A possible brute-force event","A successful backup","A normal deployment","A database index"],a:0},
+{cat:"SOC / Blue Team",q:"What is the main purpose of a SIEM?",o:["Edit videos","Collect and correlate security events","Design websites","Compile mobile apps"],a:1},
+{cat:"Incident Response",q:"What should generally happen first after confirming a serious security incident?",o:["Delete all logs","Follow the incident response process and contain the threat","Publish credentials","Ignore the alert"],a:1},
+{cat:"Cloud Security",q:"Which is a common cloud security mistake?",o:["Using least privilege","Leaving sensitive storage publicly accessible","Enabling MFA","Logging administrative actions"],a:1},
+{cat:"Interview",q:"How confidently can you explain a security incident you investigated or a security project you built?",o:["Not confident","Somewhat confident","Confident","Very confident"],a:null},
+{cat:"Interview",q:"How comfortable are you explaining why a security control reduces a specific risk?",o:["Not comfortable","Somewhat comfortable","Comfortable","Very comfortable"],a:null}
+],
+"Software Developer":[
+{cat:"Programming",q:"Which data structure follows LIFO?",o:["Queue","Stack","Graph","Heap"],a:1},
+{cat:"Programming",q:"What is the main purpose of a function?",o:["Repeat reusable logic","Store only images","Replace the operating system","Increase monitor resolution"],a:0},
+{cat:"DSA",q:"Which data structure is commonly used for BFS?",o:["Stack","Queue","Tree only","Array only"],a:1},
+{cat:"DSA",q:"What is the average time complexity of binary search on sorted data?",o:["O(1)","O(log n)","O(n)","O(n²)"],a:1},
+{cat:"DSA",q:"Which approach divides a problem into smaller subproblems and combines their results?",o:["Divide and conquer","Random guessing","Linear scanning only","Manual testing"],a:0},
+{cat:"Databases",q:"Which SQL clause filters rows before grouping?",o:["WHERE","HAVING","ORDER BY","GROUP BY"],a:0},
+{cat:"Web",q:"What does HTTP status code 404 indicate?",o:["Success","Redirect","Not Found","Server started"],a:2},
+{cat:"Git",q:"What is Git primarily used for?",o:["Version control","Image editing","Network routing","Database backup only"],a:0},
+{cat:"Problem Solving",q:"When a program produces an unexpected result, what is the best first step?",o:["Rewrite everything","Reproduce and isolate the problem","Delete the repository","Ignore it"],a:1},
+{cat:"Programming",q:"Which concept allows one interface to represent different underlying implementations?",o:["Polymorphism","Hard coding","Compression","Caching only"],a:0},
+{cat:"Interview",q:"How confidently can you explain one project from problem statement to implementation and result?",o:["Not confident","Somewhat confident","Confident","Very confident"],a:null},
+{cat:"Interview",q:"How comfortable are you solving a coding problem while explaining your thinking aloud?",o:["Not comfortable","Somewhat comfortable","Comfortable","Very comfortable"],a:null}
+],
+"Data Analyst":[
+{cat:"Statistics",q:"What does the mean represent?",o:["The middle value only","The arithmetic average","The most frequent value","The largest value"],a:1},
+{cat:"Statistics",q:"Which measure is generally less affected by extreme outliers?",o:["Mean","Median","Sum","Range"],a:1},
+{cat:"SQL",q:"Which clause filters rows before aggregation?",o:["WHERE","HAVING","ORDER BY","JOIN"],a:0},
+{cat:"SQL",q:"Which SQL operation combines rows from related tables?",o:["JOIN","SORT","FORMAT","RENAME"],a:0},
+{cat:"Data Analysis",q:"What is a useful first step when receiving an unfamiliar dataset?",o:["Immediately build a dashboard","Inspect structure, quality and missing values","Delete unusual rows","Publish it"],a:1},
+{cat:"Visualization",q:"Which chart is generally useful for showing a trend over time?",o:["Line chart","Pie chart only","Single number","Icon"],a:0},
+{cat:"Business Analysis",q:"If sales rise but profit falls, what should an analyst investigate?",o:["Only sales volume","Costs/margins and other drivers","Font size","Nothing"],a:1},
+{cat:"Excel / Sheets",q:"What is a pivot table mainly useful for?",o:["Summarizing and exploring data","Writing operating systems","Encrypting passwords","Hosting websites"],a:0},
+{cat:"Data Quality",q:"Duplicate customer records can primarily cause what?",o:["Faster analysis","Distorted counts and metrics","Better visualization","More storage security"],a:1},
+{cat:"Communication",q:"A strong analytical recommendation should primarily connect data to what?",o:["A business decision or action","A random color","A longer spreadsheet","A password"],a:0},
+{cat:"Interview",q:"How confidently can you explain a dashboard or analysis and the decision it supports?",o:["Not confident","Somewhat confident","Confident","Very confident"],a:null},
+{cat:"Interview",q:"How comfortable are you explaining a finding to a non-technical stakeholder?",o:["Not comfortable","Somewhat comfortable","Comfortable","Very comfortable"],a:null}
+],
+"Business / Management":[
+{cat:"Business Basics",q:"What does revenue represent?",o:["Money earned from sales before expenses","Only profit","Only tax","Number of employees"],a:0},
+{cat:"Marketing",q:"What is market segmentation?",o:["Dividing a market into meaningful customer groups","Increasing office rent","Deleting customers","Hiring only managers"],a:0},
+{cat:"Finance",q:"If revenue is ₹10 lakh and total costs are ₹7 lakh, profit before other adjustments is:",o:["₹3 lakh","₹7 lakh","₹10 lakh","₹17 lakh"],a:0},
+{cat:"Strategy",q:"SWOT analysis includes which four areas?",o:["Sales, Work, Operations, Tax","Strengths, Weaknesses, Opportunities, Threats","Skills, Wages, Output, Time","Systems, Web, Operations, Testing"],a:1},
+{cat:"Operations",q:"What is a KPI?",o:["A key performance indicator","A programming language","A legal contract","A database type"],a:0},
+{cat:"Communication",q:"When presenting a business recommendation, what should come first?",o:["The decision/problem and relevant evidence","A long unrelated story","Every raw data point","Personal passwords"],a:0},
+{cat:"Problem Solving",q:"A process is missing its weekly target. What is the best first move?",o:["Identify the cause using evidence","Blame the team immediately","Change every process at once","Ignore it"],a:0},
+{cat:"Marketing",q:"Customer acquisition cost is best understood as:",o:["Cost to acquire a customer","Total company salary","Product selling price","Office electricity only"],a:0},
+{cat:"Leadership",q:"A good team leader should generally:",o:["Create clarity and accountability","Avoid feedback","Make every decision alone","Hide objectives"],a:0},
+{cat:"Analytics",q:"Why is comparing actual performance with a target useful?",o:["It identifies gaps and informs action","It removes the need for decisions","It guarantees profit","It replaces customers"],a:0},
+{cat:"Interview",q:"How confidently can you structure a business case and explain your recommendation?",o:["Not confident","Somewhat confident","Confident","Very confident"],a:null},
+{cat:"Interview",q:"How comfortable are you presenting an idea to a group and answering follow-up questions?",o:["Not comfortable","Somewhat comfortable","Comfortable","Very comfortable"],a:null}
+],
+"Core Engineering":[
+{cat:"Engineering Basics",q:"What does a sensor generally do?",o:["Measures or detects a physical quantity","Stores only passwords","Creates a presentation","Runs a web browser"],a:0},
+{cat:"Electrical / Electronics",q:"Ohm's law relates voltage, current and:",o:["Resistance","Frequency only","Mass","Temperature only"],a:0},
+{cat:"Problem Solving",q:"When a physical system fails intermittently, what is a strong first engineering step?",o:["Collect observations and reproduce the failure","Replace every component","Ignore the issue","Change the documentation only"],a:0},
+{cat:"Quality",q:"What is the purpose of a test procedure?",o:["Provide repeatable verification of requirements","Increase product price","Hide defects","Replace engineering design"],a:0},
+{cat:"Manufacturing",q:"Why is traceability useful in manufacturing?",o:["It helps identify history, batches and affected units","It removes quality checks","It guarantees zero defects","It replaces inventory"],a:0},
+{cat:"Safety",q:"Why should safety requirements be treated as design constraints?",o:["Because failures can create serious risk","Because they improve screen brightness","Because they reduce typing","Because they are optional"],a:0},
+{cat:"Measurement",q:"A calibration process primarily helps ensure:",o:["Measurement accuracy against a reference","Faster internet","More employees","Larger files"],a:0},
+{cat:"Documentation",q:"A good engineering report should make results:",o:["Traceable and understandable","Secret from the team","Unrelated to evidence","Impossible to reproduce"],a:0},
+{cat:"Quality",q:"Root-cause analysis aims to identify:",o:["The underlying cause of a problem","Only the person involved","The colour of a product","A random workaround"],a:0},
+{cat:"Project Work",q:"Which is most useful when explaining a technical project?",o:["Problem, approach, testing and result","Only the title","Only the budget","Only the final photo"],a:0},
+{cat:"Interview",q:"How confidently can you explain a technical project and the engineering choices behind it?",o:["Not confident","Somewhat confident","Confident","Very confident"],a:null},
+{cat:"Interview",q:"How comfortable are you troubleshooting a technical problem aloud?",o:["Not comfortable","Somewhat comfortable","Comfortable","Very comfortable"],a:null}
+]
+};
+
+function customize(base){
+  let qs=base.map(x=>({...x}));
+  if(level.startsWith("Advanced")){
+    qs.push();
+    // Advanced candidates get slightly more scenario-oriented wording.
+    qs=qs.map(x=>x);
+  }
+  return qs;
+}
+const key = banks[role] ? role : "Software Developer";
+const questions=customize(banks[key]);
+let idx=0, ans=PR.answers();
+function render(){
+ const x=questions[idx];
+ document.getElementById("category").textContent=x.cat;
+ document.getElementById("counter").textContent=`Question ${idx+1} of ${questions.length}`;
+ document.getElementById("question").textContent=x.q;
+ document.getElementById("progressFill").style.width=((idx+1)/questions.length*100)+"%";
+ const box=document.getElementById("options"); box.innerHTML="";
+ x.o.forEach((v,i)=>{
+   const d=document.createElement("label");
+   d.className="option"+(ans[idx]===i?" selected":"");
+   d.innerHTML=`<input type="radio" name="answer" value="${i}" ${ans[idx]===i?"checked":""}> <span>${v}</span>`;
+   d.onclick=()=>{ans[idx]=i;PR.setAnswers(ans);render()};
+   box.appendChild(d);
+ });
+ document.getElementById("prev").disabled=idx===0;
+ document.getElementById("next").textContent=idx===questions.length-1?"Finish Assessment →":"Next →";
+}
+document.getElementById("prev").onclick=()=>{if(idx>0){idx--;render()}};
+document.getElementById("next").onclick=()=>{
+ if(ans[idx]===undefined){alert("Please select an answer before continuing.");return}
+ if(idx<questions.length-1){idx++;render()} else {
+   Promise.all([PR.save("diagnosticMeta",{role,key,level}),PR.save("questionBank",questions)]).then(()=>PR.saveDiagnosticSnapshot()).then(()=>location.href="analyzing.html");
+ }
+};
+render();
+});
+</script></body></html>
