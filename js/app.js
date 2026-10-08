@@ -324,8 +324,46 @@ const PR = {
         homePanel?.classList.add("hidden");
       }
     }
+    renderMobileAuth();
   }
 };
+function setupMobileNav(){
+  const toggle=document.getElementById("mobileMenuToggle");
+  const menu=document.getElementById("mobileMenu");
+  const slot=document.getElementById("mobileAuthSlot");
+  if(!toggle||!menu) return;
+  const close=()=>{
+    menu.classList.remove("is-open");
+    toggle.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded","false");
+    menu.setAttribute("aria-hidden","true");
+    document.body.classList.remove("mobile-menu-open");
+  };
+  toggle.addEventListener("click",()=>{
+    const open=!menu.classList.contains("is-open");
+    if(open){menu.classList.add("is-open");toggle.classList.add("is-open");toggle.setAttribute("aria-expanded","true");menu.setAttribute("aria-hidden","false");document.body.classList.add("mobile-menu-open");}
+    else close();
+  });
+  menu.querySelectorAll("a").forEach(a=>a.addEventListener("click",close));
+  window.addEventListener("resize",()=>{if(window.innerWidth>640) close();});
+  window.closeMobileNav=close;
+}
+function renderMobileAuth(){
+  const slot=document.getElementById("mobileAuthSlot"); if(!slot) return;
+  const u=PRAuth.getUser();
+  const isLanding=location.pathname.endsWith("/") || location.pathname.endsWith("/index.html");
+  if(u){
+    const name=u.displayName || (u.isDemo ? "Demo Student" : u.email || "Student");
+    slot.innerHTML=`<div class="mobile-user-label">Hi, ${String(name).replace(/[<>&"']/g,"_")} 👋</div><a href="diagnostics.html">View Diagnostics →</a><button class="mobile-logout" type="button">Log Out</button>`;
+    slot.querySelector(".mobile-logout")?.addEventListener("click",async()=>{if(window.closeMobileNav) window.closeMobileNav(); await PRAuth.logout(); location.href="index.html";});
+  }else if(isLanding){
+    slot.innerHTML=`<a class="mobile-login" href="#">Log In</a>`;
+    slot.querySelector(".mobile-login")?.addEventListener("click",async e=>{
+      e.preventDefault(); if(window.closeMobileNav) window.closeMobileNav();
+      const btn=document.getElementById("landingLoginBtn"); if(btn) btn.click();
+    });
+  }else slot.innerHTML="";
+}
 function requireProfile(){ if(!PR.profile().targetRole){ location.href="profile.html"; } }
 
 const PRProgress = {
@@ -342,4 +380,4 @@ const PRProgress = {
   daysCompleted(){ return Object.values(this.getLogs()).filter(x=>x.completed).length; }
 };
 
-window.addEventListener("DOMContentLoaded",()=>PRAuth.init());
+window.addEventListener("DOMContentLoaded",()=>{ setupMobileNav(); PRAuth.init(); });

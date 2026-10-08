@@ -1,5 +1,16 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step 1 — Your Placement Goal</title><link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/firebase-config.js"></script><script src="js/app.js"></script></head>
-<body><header class="container nav"><a class="logo" href="index.html">Placement<span>Radar</span></a><span class="muted" style="font-size:13px">Diagnostic · Step 1 of 3</span></header>
+<body><header class="container nav"><a class="logo" href="index.html">Placement<span>Radar</span></a><span class="muted" style="font-size:13px">Diagnostic · Step 1 of 3</span>
+<button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <div class="mobile-menu-inner">
+    <a href="dashboard.html">Radar</a>
+    <a href="plan.html">My Plan</a>
+    <a href="progress.html">Progress</a>
+    <a href="diagnostics.html">View Diagnostics</a>
+    <div class="mobile-auth-slot" id="mobileAuthSlot"></div>
+  </div>
+</div>
+</header>
 <main class="container page"><div id="newDiagnosticNotice" class="new-diagnostic-notice card" style="display:none"><div class="new-diagnostic-icon">↻</div><div class="eyebrow">NEW DIAGNOSTIC</div><h1>Start a new diagnostic?</h1><p class="muted">Your completed diagnostics are already saved in <strong>View Diagnostics</strong>. Starting a new one creates a separate workspace — your previous diagnostics, plans and progress stay safe and can be resumed later.</p><div class="new-diagnostic-actions"><button class="btn btn-ghost" id="keepCurrentDiagnostic" type="button">Save & Start New Diagnostic</button><button class="btn btn-primary" id="confirmNewDiagnostic" type="button">Start New Diagnostic →</button></div></div><div id="profileCard" class="form-card card"><div class="eyebrow">STEP 1 / YOUR PLACEMENT GOAL</div><h1>Let’s understand where you’re headed.</h1><p class="muted">Your answers here decide which assessment you receive. Cybersecurity students, developers, analysts and business candidates will not get the same questions.</p><div class="progress"><div style="width:33%"></div></div>
 <form id="profileForm"><div class="form-grid">
 <div class="field"><label>Your name</label><input id="name" required placeholder="e.g. Rushil"></div>

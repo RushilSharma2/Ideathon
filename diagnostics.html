@@ -1,5 +1,16 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Diagnostics — Placement Radar</title><link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/firebase-config.js"></script><script src="js/app.js"></script></head>
-<body><header class="container nav"><a class="logo" href="index.html">Placement<span>Radar</span></a><nav class="navlinks"><a href="dashboard.html">Radar</a><a href="plan.html">My Plan</a><a href="progress.html">Progress</a></nav><div class="nav-right"><div id="userMenu" class="user-menu"></div></div></header>
+<body><header class="container nav"><a class="logo" href="index.html">Placement<span>Radar</span></a><nav class="navlinks"><a href="dashboard.html">Radar</a><a href="plan.html">My Plan</a><a href="progress.html">Progress</a></nav><div class="nav-right"><div id="userMenu" class="user-menu"></div></div>
+<button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <div class="mobile-menu-inner">
+    <a href="dashboard.html">Radar</a>
+    <a href="plan.html">My Plan</a>
+    <a href="progress.html">Progress</a>
+    <a href="diagnostics.html">View Diagnostics</a>
+    <div class="mobile-auth-slot" id="mobileAuthSlot"></div>
+  </div>
+</div>
+</header>
 <main class="container page"><div class="topline"><div><div class="eyebrow">DIAGNOSTIC WORKSPACES</div><h1>Your diagnostics</h1><p class="muted">Each diagnostic is its own workspace. Pause one, work on another, and come back later without losing your plan or progress.</p></div><a class="btn btn-primary" href="dashboard.html">← Back to Radar</a></div><div id="current" class="card diagnostic-current"></div><section><div class="section-heading"><div><div class="eyebrow">SAVED WORKSPACES</div><h2>Continue or review a diagnostic</h2></div><span id="count" class="history-count"></span></div><div id="history" class="diagnostic-history-grid"></div></section><section id="detailPanel" class="card diagnostic-detail hidden"></section></main>
 <script>
 PRAuth.ready().then(async user=>{
