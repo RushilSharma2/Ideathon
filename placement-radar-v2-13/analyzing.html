@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Step 3 — AI Analysis</title><link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/firebase-config.js"></script><script src="js/app.js"></script></head>
+<body><main class="container analyze"><div><div class="orb"></div><div class="eyebrow">STEP 3 / AI READINESS ANALYSIS</div><h1>Finding your biggest gap.</h1><p class="muted" id="status">Comparing your answers against the readiness signals…</p><div class="loader"><div></div></div><p class="muted" style="font-size:12px">Placement Radar is prioritizing what you should fix first.</p></div></main>
+<script>
+PRAuth.ready().then(async user=>{
+if(!user){location.href="index.html";return;}
+function analyze(){
+ const q=PR.answers(), qs=PR.get("questionBank",[]), p=PR.profile();
+ const sums={};
+ qs.forEach((x,i)=>{
+   if(!sums[x.cat])sums[x.cat]=[0,0];
+   sums[x.cat][1]++;
+   if(x.a===null){
+      // Interview confidence maps 0..3 to 0..100.
+      sums[x.cat][0]+=q[i]??0;
+   }else{
+      sums[x.cat][0]+=(q[i]===x.a?1:0);
+   }
+ });
+ const scores={};
+ Object.entries(sums).forEach(([k,v])=>scores[k]=Math.round(v[0]/v[1]*100));
+ const interviewKey=Object.keys(scores).find(k=>k==="Interview");
+ const normalizedScores={};
+ Object.entries(scores).forEach(([k,v])=>normalizedScores[k]=k===interviewKey?Math.round(v/3*100):v);
+ // Projects is a profile-context signal for now; it will later be connected to resume/project evidence.
+ normalizedScores.Projects=72;
+ const vals=Object.values(normalizedScores), overall=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+ const sorted=Object.entries(normalizedScores).sort((a,b)=>a[1]-b[1]);
+ const bottleneck=sorted[0][0];
+ PR.save("result",{scores:normalizedScores,overall,bottleneck,role:p.role,level:p.level}).then(()=>PR.saveDiagnosticSnapshot()).then(()=>setTimeout(()=>location.href="dashboard.html",2200));
+}
+analyze();
+});
+</script></body></html>
