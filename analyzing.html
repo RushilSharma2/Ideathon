@@ -23,7 +23,8 @@ function analyze(){
  Object.entries(scores).forEach(([k,v])=>normalizedScores[k]=k===interviewKey?Math.round(v/3*100):v);
  // Projects is a profile-context signal for now; it will later be connected to resume/project evidence.
  normalizedScores.Projects=72;
- const vals=Object.values(normalizedScores), overall=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+ const vals=Object.values(normalizedScores).map(v=>Math.max(0,Math.min(100,Number(v)||0)));
+ const overall=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):0;
  const sorted=Object.entries(normalizedScores).sort((a,b)=>a[1]-b[1]);
  const bottleneck=sorted[0][0];
  PR.save("result",{scores:normalizedScores,overall,bottleneck,role:p.role,level:p.level}).then(()=>PR.saveDiagnosticSnapshot()).then(()=>setTimeout(()=>location.href="dashboard.html",2200));

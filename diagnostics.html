@@ -56,5 +56,15 @@ document.querySelectorAll(".continue-diagnostic").forEach(btn=>btn.addEventListe
 document.querySelectorAll(".view-diagnostic").forEach(btn=>btn.addEventListener("click",()=>{const d=items.find(x=>x.id===btn.dataset.id);if(d)showDiagnostic(d);}));
 document.querySelectorAll(".delete-diagnostic").forEach(btn=>btn.addEventListener("click",()=>deleteDiagnostic(btn.dataset.id)));
 
+// Browser back/forward may restore this page from the back-forward cache.
+// Reset temporary loading states so every diagnostic is actionable again.
+window.addEventListener("pageshow",()=>{
+  document.querySelectorAll(".continue-diagnostic").forEach(btn=>{
+    btn.disabled=false;
+    btn.textContent=btn.closest(".diagnostic-card")?.classList.contains("diagnostic-card-active") ? "Open Active Diagnostic →" : "Continue This Diagnostic →";
+  });
+  document.querySelectorAll(".delete-diagnostic").forEach(btn=>{ btn.disabled=false; btn.textContent="Delete Diagnostic"; });
+});
+
 });
 </script></body></html>
