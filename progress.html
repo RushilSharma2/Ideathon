@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Progress — Placement Radar</title>
+<link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/firebase-config.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<header class="container nav">
+<a class="logo" href="index.html">Placement<span>Radar</span></a>
+<nav class="navlinks"><a href="dashboard.html">Radar</a><a href="plan.html">My Plan</a><a href="progress.html">Progress</a></nav><div class="nav-right"><div id="userMenu" class="user-menu"></div></div>
+</header>
+<main class="container page">
+<div class="eyebrow">YOUR PROGRESS</div>
+<h1 id="heading">Your improvement journey.</h1>
+<p class="muted" id="subheading">Every completed day and quick check is recorded on this device.</p>
+
+<div class="dashboard-grid" style="margin-top:22px">
+<div class="card score-card">
+<div class="eyebrow">PLAN COMPLETION</div>
+<div class="bigscore" id="percent">0%</div>
+<div class="muted" id="daysText">0 days completed</div>
+<div class="progress" style="margin-top:20px"><div id="fill" style="width:0%"></div></div>
+<div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+<div class="signal"><div class="signal-top"><span>Current streak</span><b id="streak">0</b></div><div class="signal-score">days 🔥</div></div>
+<div class="signal"><div class="signal-top"><span>Quick checks</span><b id="checks">0</b></div><div class="signal-score">recorded</div></div>
+</div>
+</div>
+<div class="bottleneck">
+<span class="pill" style="background:rgba(0,217,255,.10);color:#71e9ff">CAPABILITY TRACKING</span>
+<h2 id="focus">—</h2>
+<p class="reason">Your daily progress is recorded through a short skill check. Completing a task alone does not count as demonstrated improvement.</p>
+<div class="action"><b>How progress is measured</b><div class="muted" style="margin-top:6px;font-size:13px">Plan activity + daily quick checks + final reassessment.</div></div>
+</div>
+</div>
+
+<div class="card list" style="margin-top:18px">
+<div class="eyebrow">DAILY RECORD</div>
+<h2>Your activity history</h2>
+<div id="history" style="display:grid;gap:10px;margin-top:16px"></div>
+</div>
+
+<div class="card list" style="margin-top:18px">
+<div class="eyebrow">NEXT MILESTONE</div>
+<h2 id="milestone">Complete Day 1</h2>
+<p class="muted" id="milestoneText">Open your personalized plan and record your first daily quick check.</p>
+<a class="btn btn-primary" href="plan.html">Open My Plan →</a>
+</div>
+</main>
+<script>
+PRAuth.ready().then(async user=>{
+if(!user){location.href="index.html";return;}
+const r=PR.get("result"),p=PR.profile(),plan=PRProgress.getPlan(),logs=PRProgress.getLogs();
+if(!r||!plan){location.href="profile.html"}
+const done=Object.values(logs).filter(x=>x.completed).length;
+const pct=Math.round(done/plan.duration*100);
+document.getElementById("heading").textContent=`Your ${plan.focus} improvement journey`;
+document.getElementById("subheading").textContent=`${plan.duration}-day plan · ${p.role||"Target role"} · Progress is saved in your browser for this MVP.`;
+document.getElementById("percent").textContent=pct+"%";
+document.getElementById("daysText").textContent=`${done} of ${plan.duration} days completed`;
+document.getElementById("fill").style.width=pct+"%";
+document.getElementById("focus").textContent=plan.focus;
+const checkCount=Object.values(logs).filter(x=>x.score!=null).length;
+document.getElementById("checks").textContent=checkCount;
+let streak=0;
+for(let d=1;d<=done;d++){if(logs[d]?.completed)streak++;else break}
+document.getElementById("streak").textContent=streak;
+
+const hist=document.getElementById("history");
+if(!done) hist.innerHTML='<div class="signal"><span class="muted">No progress recorded yet. Start Day 1 from your plan.</span></div>';
+else {
+  for(let d=1;d<=plan.duration;d++){
+    const l=logs[d];
+    if(!l) continue;
+    const t=plan.tasks[d-1];
+    hist.innerHTML+=`<div class="signal" style="display:flex;justify-content:space-between;align-items:center;gap:15px"><div><b>Day ${d} · ${t[0]}</b><div class="muted" style="font-size:12px;margin-top:5px">${new Date(l.completedAt).toLocaleString()}</div></div><div style="text-align:right"><b>${l.score}/${l.total}</b><div class="muted" style="font-size:11px">quick check</div></div></div>`;
+  }
+}
+const next=done+1;
+if(next<=plan.duration){
+ document.getElementById("milestone").textContent=`Day ${next} · ${plan.tasks[next-1][0]}`;
+ document.getElementById("milestoneText").textContent=plan.tasks[next-1][1];
+}else{
+ document.getElementById("milestone").textContent="Final reassessment ready";
+ document.getElementById("milestoneText").textContent="You completed the plan. The next step is a full targeted reassessment to compare your new readiness with your starting baseline.";
+}
+});
+</script>
+</body></html>

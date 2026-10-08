@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Personalized Improvement Plan</title>
+<link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/firebase-config.js"></script><script src="js/app.js"></script>
+</head>
+<body>
+<header class="container nav">
+<a class="logo" href="index.html">Placement<span>Radar</span></a>
+<nav class="navlinks"><a href="dashboard.html">Radar</a><a href="plan.html">My Plan</a><a href="progress.html">Progress</a></nav><div class="nav-right"><div id="userMenu" class="user-menu"></div></div>
+</header>
+
+<main class="container page">
+<div class="topline">
+<div>
+<div class="eyebrow">PERSONALIZED IMPROVEMENT PLAN</div>
+<h1 id="title">Building your plan…</h1>
+<p class="muted" id="summary"></p>
+</div>
+<a class="btn btn-primary" href="progress.html">View My Progress →</a>
+</div>
+
+<div class="card" style="padding:24px;margin-bottom:18px">
+<div style="display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center">
+<div><div class="eyebrow">PLAN PROGRESS</div><h2 id="planProgress" style="margin:7px 0">0 / 0 days</h2></div>
+<div style="min-width:240px;flex:1;max-width:520px"><div class="progress"><div id="planFill" style="width:0%"></div></div><div class="muted" id="planPercent" style="font-size:12px">0% complete</div></div>
+<div class="signal"><div class="signal-top"><span>Current focus</span><b id="focus"></b></div><div class="signal-score" id="duration"></div></div>
+</div>
+</div>
+
+<div class="card" style="padding:24px;margin-bottom:18px">
+<div class="eyebrow">YOUR DAILY JOURNEY</div>
+<div id="days" style="display:grid;gap:12px;margin-top:16px"></div>
+</div>
+
+<div id="checkModal" class="card hidden" style="padding:26px;position:relative">
+<div class="eyebrow">DAILY TOPIC CHECK</div>
+<h2 id="checkTitle">Show what you learned.</h2>
+<p class="muted">Answer questions specifically about today's topic before recording your progress.</p>
+<div id="checkQuestions"></div>
+<div class="form-actions"><button class="btn btn-ghost" onclick="closeCheck()">Cancel</button><button id="checkNextBtn" class="btn btn-primary" onclick="submitCheck()">Next Question →</button></div>
+</div>
+</main>
+
+<script>
+PRAuth.ready().then(async user=>{
+if(!user){location.href="index.html";return;}
+const r=PR.get("result"), p=PR.profile();
+if(!r){location.href="profile.html"}
+
+const templates={
+"DSA":[
+["Foundation","Arrays, traversal and basic patterns"],["Strings","Frequency maps, two pointers and string operations"],["Searching","Binary search and sorted-data problems"],["Sorting","Core sorting approaches and use cases"],["Linked Lists","Traversal, insertion, deletion and reversal"],["Stacks & Queues","LIFO/FIFO and practical applications"],["Hashing","Hash maps, sets and lookup patterns"],["Recursion","Base cases and recursive thinking"],["Two Pointers","Pair and window-style problem patterns"],["Sliding Window","Fixed and variable window techniques"],["Trees","Traversal and basic tree problems"],["Graphs","BFS, DFS and graph representation"],["Complexity","Time and space complexity practice"],["Mixed Problems","Easy/medium mixed problem set"],["Timed Practice","Short timed DSA set"],["Error Review","Review mistakes from previous practice"],["Pattern Recognition","Identify the right approach before coding"],["Mock Round","Interview-style DSA questions"],["Weak Area Repair","Target the lowest-performing topic"],["Mixed Challenge","Combined problem-solving practice"],["Speed & Accuracy","Timed practice with fewer hints"],["Interview Explanation","Explain solutions aloud"],["Mock Interview","Full DSA practice round"],["Final Revision","Review notes and recurring mistakes"],["Final Re-test","Measure your improvement"] ],
+"Technical":[
+["Programming Basics","Variables, functions, conditions and loops"],["Data Types","Common data types and when to use them"],["OOP","Classes, objects and core OOP concepts"],["Databases","Tables, keys and relationships"],["SQL Basics","SELECT, WHERE and filtering"],["SQL Intermediate","JOIN, GROUP BY and aggregation"],["Web Basics","HTTP, requests, responses and status codes"],["APIs","REST concepts and API communication"],["Git","Branches, commits and version control"],["Operating Systems","Processes, memory and files"],["Networking","IP, DNS and common protocols"],["Security Basics","Authentication and authorization"],["Testing","Test cases and debugging basics"],["Debugging","Reproduce, isolate and fix issues"],["Mixed Quiz","Technical concept assessment"],["Weak Area Repair","Target lowest-performing concepts"],["Scenario Practice","Apply concepts to realistic situations"],["Project Questions","Explain technical choices"],["Timed Practice","Technical questions under time pressure"],["Interview Basics","Common technical interview questions"],["Mock Technical Round","Mixed technical practice"],["Error Review","Review incorrect answers"],["Advanced Concepts","Role-relevant deeper concepts"],["Final Revision","Consolidate notes"],["Final Re-test","Measure your improvement"] ],
+"Aptitude":[
+["Percentages","Percentage change and base values"],["Ratios","Ratio and proportion"],["Averages","Average and weighted-average problems"],["Profit & Loss","Commercial arithmetic"],["Time & Work","Work-rate and efficiency"],["Speed & Distance","Distance, speed and relative speed"],["Simple Interest","Interest calculations"],["Probability","Basic probability reasoning"],["Permutations","Counting and arrangement basics"],["Logical Reasoning","Patterns and deductions"],["Number Systems","Divisibility and arithmetic"],["Data Interpretation","Tables and charts"],["Mixed Practice","Combined aptitude set"],["Timed Practice","Timed question set"],["Error Review","Review incorrect question types"],["Weak Area Repair","Focus on lowest accuracy area"],["Advanced Practice","Higher-difficulty questions"],["Mock Aptitude","Full timed section"],["Speed Building","Reduce average time per question"],["Accuracy Building","Reduce avoidable mistakes"],["Mixed Practice","Second combined set"],["Interview Aptitude","Placement-style questions"],["Mock Test","Full aptitude simulation"],["Final Revision","Formula and method review"],["Final Re-test","Measure your improvement"] ],
+"Interview":[
+["Your Story","60–90 second introduction"],["Project Pitch","Explain one project clearly"],["Strengths","Identify evidence-backed strengths"],["Weaknesses","Give a constructive weakness answer"],["STAR Method","Structure behavioural examples"],["Technical Explanation","Explain one concept simply"],["Communication","Improve concise answers"],["Body Language","Practice professional delivery"],["Resume Walkthrough","Explain your resume"],["Project Deep Dive","Prepare follow-up questions"],["HR Questions","Practice common HR questions"],["Situation Questions","Handle scenario questions"],["Behavioural Questions","Prepare experience examples"],["Company Questions","Explain why this role/company"],["Mock Interview","Short recorded practice"],["Review","Review your recording"],["Weak Answer Repair","Rewrite weak responses"],["Technical Mock","Technical discussion practice"],["Case/Scenario","Reason through unfamiliar situations"],["Pressure Round","Answer with limited preparation"],["Story Refinement","Improve clarity and evidence"],["Mock Interview","Full interview simulation"],["Feedback Review","Address recurring issues"],["Final Preparation","Build final answer checklist"],["Final Re-test","Measure your improvement"] ],
+"Web Security":[
+["HTTP","Requests, responses, methods and status codes"],["Cookies & Sessions","Session fundamentals"],["Authentication","Login and identity concepts"],["Authorization","Access-control fundamentals"],["Input Validation","Safe handling of user input"],["SQL Injection","Identify and prevent SQL injection"],["XSS","Understand reflected and stored XSS"],["CSRF","Understand cross-site request forgery"],["Secure Passwords","Hashing and password storage"],["OWASP","Review common web risks"],["Security Headers","Understand key browser protections"],["API Security","Common API security risks"],["Access Control","Scenario-based authorization"],["Secure Coding","Apply security principles"],["Threat Scenarios","Identify likely attack paths"],["Weak Area Repair","Focus on weakest security topic"],["Mixed Practice","Combined web-security questions"],["Case Analysis","Analyze a vulnerable scenario"],["Detection","Recognize suspicious behaviour"],["Remediation","Choose appropriate fixes"],["Timed Practice","Security questions under time pressure"],["Incident Scenario","Respond to a web-security incident"],["Mock Security Round","Mixed security assessment"],["Final Revision","Consolidate security notes"],["Final Re-test","Measure your improvement"] ]
+};
+
+function buildPlan(){
+ const bottleneck=r.bottleneck;
+ let key=bottleneck;
+ if(bottleneck==="Technical") key="Technical";
+ if(bottleneck==="Interview") key="Interview";
+ if(bottleneck==="Aptitude") key="Aptitude";
+ if(bottleneck==="DSA") key="DSA";
+ if(bottleneck==="Projects") key="Technical";
+ let arr=templates[key];
+ if(!arr){
+   const role=String(p.role||"").trim();
+   const field=bottleneck||"Placement Skills";
+   const stages=[
+     ["Fundamentals","Build a clear foundation"],["Core Concepts","Understand the key concepts"],["Terminology","Learn the essential terminology"],["Practical Basics","Apply the basics to simple examples"],["Scenario Practice","Apply the field to realistic situations"],["Problem Solving","Solve common placement-style problems"],["Common Mistakes","Identify and avoid frequent mistakes"],["Tools & Methods","Practice the common tools and methods"],["Analysis","Break down a realistic problem"],["Decision Making","Choose an appropriate approach"],["Communication","Explain the concept clearly"],["Case Practice","Work through a short case"],["Applied Practice","Use the concept in a practical task"],["Intermediate Practice","Handle a slightly harder scenario"],["Timed Practice","Answer field questions under time pressure"],["Error Review","Review and correct mistakes"],["Weak Area Repair","Strengthen the weakest part"],["Mixed Practice","Combine multiple concepts"],["Interview Questions","Practice placement questions"],["Scenario Challenge","Solve an unfamiliar scenario"],["Speed & Accuracy","Improve both speed and accuracy"],["Mock Round","Complete a realistic mini-round"],["Feedback Review","Review mistakes and improve"],["Final Revision","Consolidate the important concepts"],["Final Re-test","Measure improvement"]
+   ];
+   arr=stages.map(([name,desc])=>[`${field} — ${name}`,`${desc} for ${field}${role?` in ${role}`:""}.`]);
+ }
+
+ // Duration adapts to severity and available study time.
+ const weakest=r.scores[bottleneck]||50;
+ const hours=Number(p.time||2);
+ let target;
+ if(weakest>=75) target=10;
+ else if(weakest>=60) target=15;
+ else if(weakest>=45) target=20;
+ else target=25;
+ if(hours<1.5) target+=5;
+ else if(hours>=4) target=Math.max(10,target-5);
+ target=Math.min(30,Math.max(10,target));
+ return {focus:bottleneck,duration:target,tasks:arr.slice(0,target)};
+}
+let plan=PRProgress.getPlan();
+if(!plan || plan.focus!==r.bottleneck || !plan.tasks){
+ plan=buildPlan(); PRProgress.savePlan(plan); await PR.updateLatestDiagnosticSnapshot();
+}
+const logs=PRProgress.getLogs();
+document.getElementById("title").textContent=`Your ${plan.duration}-Day ${plan.focus} Improvement Plan`;
+document.getElementById("summary").textContent=`Placement Radar estimated ${plan.duration} days based on your ${r.scores[plan.focus]}/100 readiness, target role (${p.role||"your target role"}) and available preparation time.`;
+document.getElementById("focus").textContent=plan.focus;
+document.getElementById("duration").textContent=`${plan.duration} days`;
+
+function refresh(){
+ const done=Object.values(PRProgress.getLogs()).filter(x=>x.completed).length;
+ document.getElementById("planProgress").textContent=`${done} / ${plan.duration} days`;
+ document.getElementById("planPercent").textContent=`${Math.round(done/plan.duration*100)}% complete`;
+ document.getElementById("planFill").style.width=(done/plan.duration*100)+"%";
+ const box=document.getElementById("days"); box.innerHTML="";
+ plan.tasks.forEach((t,i)=>{
+   const day=i+1, log=PRProgress.getDay(day), today=day===done+1;
+   const card=document.createElement("div");
+   card.className="signal";
+   card.style.display="grid";card.style.gridTemplateColumns="75px 1fr auto";card.style.gap="14px";card.style.alignItems="center";
+   card.innerHTML=`<div><div class="eyebrow">DAY ${day}</div><div style="font-size:12px;color:${log?.completed?'#35d49a':today?'#00d9ff':'#9aa6bd'};margin-top:5px">${log?.completed?'✓ COMPLETED':today?'● TODAY':'UP NEXT'}</div></div>
+   <div><b>${t[0]}</b><div class="muted" style="font-size:12px;margin-top:5px">${t[1]}</div>${log?.score!=null?`<div style="font-size:12px;margin-top:7px">Quick check: <b>${log.score}/${log.total}</b></div>`:''}</div>
+   <div>${log?.completed?'<span class="pill" style="background:rgba(53,212,154,.12);color:#72e5b9">RECORDED</span>':today?'<button class="btn btn-primary" onclick="openCheck('+day+')">Record Today</button>':'<span class="muted" style="font-size:11px">Complete previous day</span>'}</div>`;
+   box.appendChild(card);
+ });
+}
+let activeDay=null;
+let activeQuestions=[];
+let activeQuestionIndex=0;
+let checkAnswers=[];
+
+const roleSpecificVariants={
+  "Cybersecurity":[
+    ["concept","Which is the best way to prepare {topic} for a cybersecurity placement?","Understand the security concept and apply it to a realistic attack or defense scenario"],
+    ["scenario","An interviewer gives you a {topic} scenario. What should you do first?","Identify the asset, risk, assumptions and likely impact before choosing a control"],
+    ["explain","How should you explain {topic} in a cybersecurity interview?","Define it, give a realistic example and explain how to prevent, detect or handle it"]
+  ],
+  "Software Developer":[
+    ["concept","What should a software developer understand about {topic} before using it?","The core concept, common use cases, trade-offs and limitations"],
+    ["scenario","You face a development problem involving {topic}. What should you do first?","Understand the requirement, reproduce the issue and identify the relevant constraints"],
+    ["explain","How should you explain {topic} in a software-development interview?","Give the definition, a practical example and explain why that approach is appropriate"]
+  ],
+  "Data Analyst":[
+    ["concept","When working with {topic}, what should a data analyst verify first?","The data definition, assumptions, quality and context of the analysis"],
+    ["scenario","A stakeholder asks you to use {topic} for a business decision. What should you do first?","Clarify the business question, validate the data and choose an appropriate method"],
+    ["explain","How should you explain {topic} to a non-technical interviewer?","Use a simple definition, a small example and explain the business meaning"]
+  ],
+  "Business / Management":[
+    ["concept","What is the most useful way to understand {topic} for a management placement?","Connect the concept to a business objective, decision or measurable outcome"],
+    ["scenario","A manager asks you to apply {topic} to a business situation. What should you do first?","Clarify the objective, stakeholders, constraints and available evidence"],
+    ["explain","How would you present {topic} in a management interview?","Define the idea, connect it to a business example and explain the expected impact"]
+  ],
+  "Core Engineering":[
+    ["concept","What should a core-engineering candidate understand about {topic}?","The underlying principle, practical application, constraints and relevant quality or safety considerations"],
+    ["scenario","You are given an engineering problem involving {topic}. What should you do first?","Understand specifications, measurements, constraints and failure conditions before selecting a solution"],
+    ["explain","How should you explain {topic} in a core-engineering interview?","Explain the principle, give a practical application and mention quality or safety considerations"]
+  ]
+};
+
+const genericVariants=[
+  ["concept","What is the strongest way to prepare {topic} for a placement interview?","Understand the concept and apply it to a realistic problem"],
+  ["scenario","If you are asked to use {topic} in a practical situation, what should you do first?","Clarify the goal, identify the relevant facts and choose an appropriate approach"],
+  ["explain","What makes an answer about {topic} strong in a placement interview?","A clear explanation supported by a relevant example and sound reasoning"]
+];
+
+function buildTopicSpecificQuestions(day){
+ const task=plan.tasks[day-1]||[];
+ const topic=task[0]||"Today's topic";
+ const description=task[1]||"the topic";
+ const focus=plan.focus||"Placement Skills";
+ const role=String(p.role||"Other");
+ const seed=day;
+ const pools={
+  "DSA":[
+   [`In ${topic}, what should you identify before coding?`,["The pattern, inputs, outputs and constraints","Only the variable names","Only the programming language","Only the final answer"],0],
+   [`A placement problem uses ${topic}. Which practice best checks your understanding?`,["Solve a fresh problem and explain the approach","Read the definition once","Memorize code without tracing it","Skip edge cases"],0],
+   [`For ${topic}, what should you review after making a mistake?`,["Why the approach failed and how to improve it","Only the score","Only the syntax","Nothing if the code runs"],0]
+  ],
+  "Technical":[
+   [`For ${topic}, which preparation is most useful for a software/technical interview?`,["Understand the concept, use case and trade-offs","Memorize one definition","Avoid examples","Learn only the terminology"],0],
+   [`A project question involves ${topic}. What should you be able to explain?`,["How it works and why you chose the approach","Only its name","Only its abbreviation","Only where you found it"],0],
+   [`After practicing ${topic}, what is a strong next step?`,["Apply it to a realistic scenario and review mistakes","Stop after reading notes","Repeat the same answer","Ignore incorrect answers"],0]
+  ],
+  "Aptitude":[
+   [`In ${topic}, what should you identify before calculating an answer?`,["What is given, what is asked and which method applies","Only the answer options","Only the largest number","Only the formula name"],0],
+   [`A placement question tests ${topic}. What improves performance most?`,["Solve fresh questions and review the error pattern","Guess quickly","Skip units and conditions","Memorize answers"],0],
+   [`If you make a mistake in ${topic}, what should you record?`,["The error type and correct method","Only the final answer","Only the question number","Nothing"],0]
+  ],
+  "Interview":[
+   [`For an interview topic like ${topic}, what makes an answer strong?`,["A clear answer supported by a relevant example","Only a one-line definition","A memorized script with no example","Changing the topic"],0],
+   [`An interviewer asks about ${topic}. What should you demonstrate?`,["Understanding, reasoning and clear communication","Only confidence","Only speed","Only technical vocabulary"],0],
+   [`After practicing ${topic}, what should you do before the next interview round?`,["Practice aloud and improve unclear parts","Memorize the same sentence","Avoid follow-up questions","Skip feedback"],0]
+  ],
+  "Web Security":[
+   [`For ${topic}, what is the most important preparation for a security interview?`,["Understand the risk, realistic scenario and appropriate defense","Memorize tool names only","Ignore the underlying risk","Focus only on terminology"],0],
+   [`A web-security scenario involves ${topic}. What should you identify first?`,["The affected asset, trust boundary, risk and expected behavior","Only the page colour","Only the tool used","Only the final report"],0],
+   [`After studying ${topic}, what is the best validation of your learning?`,["Explain the issue and choose an appropriate mitigation","Memorize a random example","Avoid practical scenarios","Only reread the notes"],0]
+  ]
+ };
+ const base=pools[focus]||[
+   [`For ${topic}, what should you understand first?`,["The concept, purpose and practical application","Only the definition","Only the terminology","Nothing until the final day"],0],
+   [`How can you practice ${topic} effectively?`,["Use a realistic scenario and review mistakes","Only reread notes","Memorize one example","Skip practice"],0],
+   [`What shows improvement in ${topic}?`,["Better accuracy and clearer reasoning on a fresh problem","Only faster typing","Only longer answers","Only more notes"],0]
+ ];
+ // Make repeated plan topics different on different days by changing the scenario context.
+ const contexts=["a campus placement test","a technical interview","a project discussion","a timed mock round","a real workplace scenario","a final reassessment"];
+ const context=contexts[(seed-1)%contexts.length];
+ return base.map((q,i)=>{
+   const opts=q[1].slice();
+   const correct=opts[q[2]];
+   const shift=(seed+i)%opts.length;
+   const rotated=opts.map((_,j)=>opts[(j+shift)%opts.length]);
+   return [`${q[0]} Your practice context: ${context}. ${role!=="Other"?`Target field: ${role}. `:""}${description}.`,rotated,rotated.indexOf(correct)];
+ });
+}
+
+function getTopicQuestions(day){
+ // Every day gets a fresh three-question set tied to that day's exact topic, focus and target field.
+ return buildTopicSpecificQuestions(day);
+}
+
+function renderActiveQuestion(){
+ const q=activeQuestions[activeQuestionIndex];
+ document.getElementById("checkQuestions").innerHTML=`<div style="margin:20px 0"><div class="eyebrow">QUESTION ${activeQuestionIndex+1} OF ${activeQuestions.length}</div><b style="display:block;margin-top:10px">${q[0]}</b><div class="options" style="margin-top:14px">${q[1].map((v,j)=>`<label class="option"><input type="radio" name="activeQuestion" value="${j}"><span>${v}</span></label>`).join("")}</div></div>`;
+ const btn=document.getElementById("checkNextBtn");
+ btn.textContent=activeQuestionIndex===activeQuestions.length-1?"Submit & Record Progress →":"Next Question →";
+ btn.disabled=false;
+}
+
+function openCheck(day){
+ activeDay=day;
+ activeQuestionIndex=0;
+ checkAnswers=[];
+ activeQuestions=getTopicQuestions(day);
+ document.getElementById("checkModal").classList.remove("hidden");
+ document.getElementById("checkTitle").textContent=`Day ${day} · ${plan.tasks[day-1][0]}`;
+ renderActiveQuestion();
+ document.getElementById("checkModal").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function closeCheck(){
+ document.getElementById("checkModal").classList.add("hidden");
+ activeDay=null; activeQuestions=[]; activeQuestionIndex=0; checkAnswers=[];
+}
+function submitCheck(){
+ if(!activeDay || !activeQuestions.length) return;
+ const chosen=document.querySelector('input[name="activeQuestion"]:checked');
+ if(!chosen){alert("Please answer this question before continuing.");return;}
+ const current=activeQuestions[activeQuestionIndex];
+ checkAnswers[activeQuestionIndex]=Number(chosen.value)===Number(current[2])?1:0;
+ if(activeQuestionIndex<activeQuestions.length-1){
+   activeQuestionIndex++;
+   renderActiveQuestion();
+   return;
+ }
+ const score=checkAnswers.reduce((sum,v)=>sum+(v||0),0);
+ const total=activeQuestions.length;
+ PRProgress.completeDay(activeDay,{score,total,topic:plan.tasks[activeDay-1][0]});
+ closeCheck();
+ refresh();
+}
+window.openCheck=openCheck;
+window.closeCheck=closeCheck;
+window.submitCheck=submitCheck;
+refresh();
+});
+</script>
+</body></html>

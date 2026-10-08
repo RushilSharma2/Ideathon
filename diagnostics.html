@@ -1,0 +1,70 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Diagnostics — Placement Radar</title><link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/firebase-config.js"></script><script src="js/app.js"></script></head>
+<body><header class="container nav"><a class="logo" href="index.html">Placement<span>Radar</span></a><nav class="navlinks"><a href="dashboard.html">Radar</a><a href="plan.html">My Plan</a><a href="progress.html">Progress</a></nav><div class="nav-right"><div id="userMenu" class="user-menu"></div></div></header>
+<main class="container page"><div class="topline"><div><div class="eyebrow">DIAGNOSTIC WORKSPACES</div><h1>Your diagnostics</h1><p class="muted">Each diagnostic is its own workspace. Pause one, work on another, and come back later without losing your plan or progress.</p></div><a class="btn btn-primary" href="dashboard.html">← Back to Radar</a></div><div id="current" class="card diagnostic-current"></div><section><div class="section-heading"><div><div class="eyebrow">SAVED WORKSPACES</div><h2>Continue or review a diagnostic</h2></div><span id="count" class="history-count"></span></div><div id="history" class="diagnostic-history-grid"></div></section><section id="detailPanel" class="card diagnostic-detail hidden"></section></main>
+<script>
+PRAuth.ready().then(async user=>{
+if(!user){location.href="index.html";return;}
+await PR.ensureActiveDiagnostic();
+await PR.saveDiagnosticSnapshot();
+const current=document.getElementById("current"),historyBox=document.getElementById("history"),detail=document.getElementById("detailPanel"),count=document.getElementById("count");
+const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+const activeId=PR.getActiveDiagnosticId();
+const activeResult=PR.get("result",null),activeProfile=PR.profile();
+current.innerHTML=activeResult?`<div class="eyebrow">ACTIVE WORKSPACE</div><div class="current-row"><div><h2>${esc(activeProfile.role||"Placement Readiness")}</h2><p class="muted">${esc(activeProfile.name||"Student")} · ${esc(activeProfile.college||"")}</p><div class="active-workspace-badge">● Currently working here</div></div><div class="current-score">${esc(activeResult.overall)}<span>/100</span></div></div><p class="muted current-note">Your assessment, plan and daily progress belong to this diagnostic only. You can switch to another diagnostic at any time.</p>`:`<div class="eyebrow">ACTIVE WORKSPACE</div><h2>New diagnostic in progress</h2><p class="muted">Finish the assessment to create its readiness result. This workspace will remain available if you leave and return later.</p>`;
+let items=PR.getDiagnosticHistory();
+items=items.slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+count.textContent=items.length?`${items.length} workspace${items.length===1?"":"s"}`:"";
+if(!items.length){historyBox.innerHTML=`<div class="empty-history card"><div class="new-diagnostic-icon">✓</div><h2>No diagnostics yet</h2><p class="muted">Complete your first assessment and its independent workspace will appear here.</p><a class="btn btn-primary" href="profile.html">Start Your Diagnostic →</a></div>`;return;}
+historyBox.innerHTML=items.map((d,i)=>{
+ const date=d.createdAt?new Date(d.createdAt).toLocaleString([], {dateStyle:"medium",timeStyle:"short"}):"Not started";
+ const role=d.profile?.role||"Placement Diagnostic";
+ const overall=d.result?.overall??"—";
+ const bottleneck=d.result?.bottleneck||"Assessment in progress";
+ const isActive=d.id===activeId;
+ const status=d.status|| (d.result?"completed":"in-progress");
+ const statusLabel=status==="completed"?"Completed":"In progress";
+ return `<article class="diagnostic-card ${isActive?"diagnostic-card-active":""}"><div class="diagnostic-card-top"><span class="diagnostic-number">DIAGNOSTIC ${items.length-i}</span><span class="diagnostic-date">${esc(date)}</span></div><div class="diagnostic-status-row"><span class="diagnostic-status ${status}">${statusLabel}</span>${isActive?'<span class="diagnostic-active-label">Active now</span>':''}</div><h2>${esc(role)}</h2><div class="diagnostic-score-row"><div class="diagnostic-score">${esc(overall)}<span>${d.result?"/100":""}</span></div><div><div class="muted">${d.result?"Biggest gap":"Workspace status"}</div><strong>${esc(bottleneck)}</strong></div></div><div class="mini-signals">${Object.entries(d.result?.scores||{}).slice(0,4).map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div><div class="diagnostic-card-actions"><button class="btn btn-primary continue-diagnostic" data-id="${esc(d.id)}">${isActive?"Open Active Diagnostic →":"Continue This Diagnostic →"}</button><button class="btn btn-ghost view-diagnostic" data-id="${esc(d.id)}">View Diagnostic</button><button class="btn btn-danger delete-diagnostic" data-id="${esc(d.id)}">Delete Diagnostic</button></div></article>`}).join("");
+function showDiagnostic(d){
+ const scores=Object.entries(d.result?.scores||{}).sort((a,b)=>b[1]-a[1]);
+ const profile=d.profile||{};
+ const logs=d.progressLogs||{};
+ const completedDays=Object.values(logs).filter(x=>x?.completed).length;
+ const plan=d.plan||null;
+ detail.innerHTML=`<div class="detail-top"><div><div class="eyebrow">SAVED DIAGNOSTIC</div><h2>${esc(profile.role||"Placement Diagnostic")}</h2><p class="muted">${esc(d.createdAt?new Date(d.createdAt).toLocaleString([], {dateStyle:"full",timeStyle:"short"}):"Not started")}</p></div><button id="closeDetail" class="btn btn-ghost">Close</button></div><div class="detail-summary"><div><div class="eyebrow">OVERALL READINESS</div><div class="detail-score">${esc(d.result?.overall??"—")}<span>${d.result?"/100":""}</span></div></div><div><div class="eyebrow">BIGGEST BOTTLENECK</div><h3>${esc(d.result?.bottleneck||"Assessment in progress")}</h3><p class="muted">${d.result?"Lowest readiness signal in this diagnostic.":"Complete the assessment to get your personalized readiness breakdown."}</p></div></div><div class="detail-columns"><div><div class="eyebrow">WORKSPACE</div><div class="detail-list">${[["Status",d.status||"In progress"],["Plan",plan?.duration?`${plan.duration} days`:"Not created yet"],["Days completed",plan?`${completedDays} / ${plan.duration}`:"—"],["Target role",profile.role], ["Company type",profile.company], ["Preparation level",profile.level], ["Daily time",profile.time?profile.time+" hours":"—"]].map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(v||"—")}</strong></div>`).join("")}</div></div><div><div class="eyebrow">READINESS BREAKDOWN</div><div class="detail-list">${scores.length?scores.map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(v)}/100</strong></div>`).join(""):'<div><span>Result</span><strong>Not completed</strong></div>'}</div></div></div><div class="detail-actions"><button class="btn btn-primary detail-continue" data-id="${esc(d.id)}">Continue This Diagnostic →</button><button class="btn btn-danger detail-delete" data-id="${esc(d.id)}">Delete Diagnostic</button></div>`;
+ detail.classList.remove("hidden");detail.scrollIntoView({behavior:"smooth",block:"start"});
+ document.getElementById("closeDetail").onclick=()=>detail.classList.add("hidden");
+ document.querySelector(".detail-continue").onclick=()=>continueDiagnostic(d.id);
+ document.querySelector(".detail-delete").onclick=()=>deleteDiagnostic(d.id);
+}
+async function deleteDiagnostic(id){
+ const item=items.find(x=>x.id===id);
+ if(!item) return;
+ const role=item.profile?.role||"this diagnostic";
+ const ok=window.confirm(`Delete ${role}?\n\nThis will permanently remove this diagnostic, its plan, answers and saved progress from View Diagnostics. This cannot be undone.`);
+ if(!ok) return;
+ const buttons=document.querySelectorAll(`[data-id="${CSS.escape(id)}"]`);
+ buttons.forEach(b=>{b.disabled=true;b.textContent="Deleting…";});
+ await PR.deleteDiagnostic(id);
+ location.reload();
+}
+async function continueDiagnostic(id){
+ const btn=document.querySelector(`.continue-diagnostic[data-id="${CSS.escape(id)}"]`); if(btn){btn.disabled=true;btn.textContent="Opening…";}
+ await PR.activateDiagnostic(id);
+ location.href="dashboard.html";
+}
+document.querySelectorAll(".continue-diagnostic").forEach(btn=>btn.addEventListener("click",()=>continueDiagnostic(btn.dataset.id)));
+document.querySelectorAll(".view-diagnostic").forEach(btn=>btn.addEventListener("click",()=>{const d=items.find(x=>x.id===btn.dataset.id);if(d)showDiagnostic(d);}));
+document.querySelectorAll(".delete-diagnostic").forEach(btn=>btn.addEventListener("click",()=>deleteDiagnostic(btn.dataset.id)));
+
+// Browser back/forward may restore this page from the back-forward cache.
+// Reset temporary loading states so every diagnostic is actionable again.
+window.addEventListener("pageshow",()=>{
+  document.querySelectorAll(".continue-diagnostic").forEach(btn=>{
+    btn.disabled=false;
+    btn.textContent=btn.closest(".diagnostic-card")?.classList.contains("diagnostic-card-active") ? "Open Active Diagnostic →" : "Continue This Diagnostic →";
+  });
+  document.querySelectorAll(".delete-diagnostic").forEach(btn=>{ btn.disabled=false; btn.textContent="Delete Diagnostic"; });
+});
+
+});
+</script></body></html>
